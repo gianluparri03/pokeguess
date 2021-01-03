@@ -1,0 +1,4 @@
+pkg
+.envrc
+.direnv
+*.swp
