@@ -2,3 +2,4 @@ pkg
 .envrc
 .direnv
 *.swp
+pokemons.json

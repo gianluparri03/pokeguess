@@ -1,6 +1,6 @@
 # PokéGuess
 
-![](https://img.shields.io/github/go-mod/go-version/gianluparri03/pokeguess?filename=src%2Fgo.mod)
+![](https://img.shields.io/github/go-mod/go-version/gianluparri03/pokeguess?filename=src%2Fserver%2Fgo.mod)
 ![](https://img.shields.io/github/license/gianluparri03/pokeguess?color=blue)
 
 
