@@ -1,51 +1,61 @@
 package main
 
 import (
-    "fmt"
-    "time"
-    "github.com/gosuri/uilive"
+    "github.com/rivo/tview"
     "github.com/gorilla/websocket"
 )
 
 
-var Username string
-var Conn *websocket.Conn
-var Writer *uilive.Writer = uilive.New()
+const server = "localhost:8080/"
+var conn *websocket.Conn
+var app *tview.Application = tview.NewApplication()
 
 
-func main() {
-    // Prepares the UI
-    Writer.Start()
-    defer Writer.Stop()
+func ShowMessage(message string) {
+    // Creates the modal
+    modal := tview.NewModal()
+    modal.SetText(message)
+    modal.AddButtons([]string{"Ok"})
+    modal.SetDoneFunc(func (i int, l string) { app.Stop() })
 
-    // Asks for an username
-    fmt.Fprintf(Writer, "Insert your username:\n> ")
-    fmt.Scanf("%s", &Username)
+    // Shows it
+    app.SetRoot(modal, false)
+}
 
-    // Tires to create a websocket
+func setUsername(username string) {
+    // Tries to create a connection
     var err error
-    Conn, _, err = websocket.DefaultDialer.Dial("ws://localhost:8080/connect/" + Username, nil)
-    defer Conn.Close()
+    conn, _, err = websocket.DefaultDialer.Dial("ws://" + server + "connect/" + username, nil)
 
-    // Checks for errors
+    // Shows eventual errors
     if err != nil {
-        fmt.Fprintln(Writer, err)
+        ShowMessage(err.Error())
         return
     }
 
-    // Prints a connecting message
-    fmt.Fprintln(Writer, "Connecting...")
-    time.Sleep(time.Second) // Eheheheeh
+    // Ensure that the connection will be closed
+    defer conn.Close()
 
-    // Waits the server for a reply
-    if msgType, msg, err := Conn.ReadMessage(); err != nil {
-        fmt.Fprintln(Writer, err)
-    } else if msgType == websocket.CloseMessage {
-        fmt.Fprintln(Writer, string(msg))
+    // Shows the server's response
+    if _, msg, err := conn.ReadMessage(); err != nil {
+        ShowMessage(err.Error())
     } else {
-        fmt.Fprintln(Writer, string(msg))
+        ShowMessage(string(msg))
     }
 
-    // Closes the connection
-    Conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, ""))
+    // Close the connection gently
+    conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, ""))
+}
+
+func main() {
+    // Creates the form
+    form := tview.NewForm()
+    form.SetBorder(true)
+    form.SetTitle("Insert an username")
+    form.AddInputField("Username:", "", 20, nil, nil)
+    form.AddButton("Connect", func () { setUsername(form.GetFormItem(0).(*tview.InputField).GetText()) })
+    form.AddButton("Quit", app.Stop)
+
+    // Shows it
+    app.SetRoot(form, true).Run()
 }
